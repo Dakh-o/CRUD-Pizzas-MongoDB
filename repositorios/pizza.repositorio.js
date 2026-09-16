@@ -1,31 +1,82 @@
-//Esta es la capa donde se persisten los datos
+// Esta es la capa donde se persisten los datos
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+import { MongoClient } from "mongodb"
 
-let pizzas = [{ id: 1, nombre: "Hawaiina", descripcion: "Jamon y piña" }]
+// Cadena de conexión a MongoDB
+const cadenaConexion = "mongodb://localhost:27017"
+
+// Cliente de MongoDB
+const cliente = new MongoClient(cadenaConexion)
+
+// Base de datos y colección que utilizaremos
+const baseDatos = cliente.db("pizzeria")
+const coleccionPizzas = baseDatos.collection("pizzas")
+
 /**
- * Regresa una lista de las pizzas
- * @returns []
+ * Obtiene todas las pizzas almacenadas en MongoDB.
+ *
+ * No recibe parámetros.
+ *
+ * @returns {Array} Devuelve una lista con todas las pizzas.
  */
 export async function obtenerTodasLasPizzasAsync() {
-   await sleep(2000)
+    const pizzas = await coleccionPizzas.find({}).toArray()
 
-   return  pizzas
+    return pizzas
 }
 
 /**
- * Regresa la pizza del id buscado o undefined si no lo encuentra
- * @param {*} id 
+ * Busca una pizza utilizando su identificador.
+ *
+ * @param {number} id - Identificador de la pizza que se desea buscar.
+ * @returns {Object|null} Devuelve la pizza encontrada o null
+ * si no existe una pizza con el id indicado.
  */
 export async function obtenerPizzaPorIdAsync(id) {
-   await sleep(1000)
+    const pizza = await coleccionPizzas.findOne({ id: Number(id) })
 
-   const pizza = pizzas.find(x => x.id == id)
-
-   return pizza
+    return pizza
 }
 
+/**
+ * Agrega una nueva pizza a MongoDB.
+ *
+ * @param {Object} pizza - Objeto que contiene la información
+ * de la pizza que se desea agregar.
+ * @returns {Object} Devuelve el resultado de la inserción.
+ */
 export async function agregarPizzaAsync(pizza) {
-   await sleep(1000)
-   pizzas.push(pizza)
+    const resultado = await coleccionPizzas.insertOne(pizza)
+
+    return resultado
+}
+
+/**
+ * Actualiza los datos de una pizza existente utilizando su identificador.
+ *
+ * @param {number} id - Identificador de la pizza que se desea actualizar.
+ * @param {Object} pizza - Objeto con los nuevos datos de la pizza.
+ * @returns {Object} Devuelve el resultado de la actualización.
+ */
+export async function actualizarPizzaAsync(id, pizza) {
+    const resultado = await coleccionPizzas.updateOne(
+        { id: Number(id) },
+        { $set: pizza }
+    )
+
+    return resultado
+}
+
+/**
+ * Elimina una pizza utilizando su identificador.
+ *
+ * @param {number} id - Identificador de la pizza que se desea eliminar.
+ * @returns {Object} Devuelve el resultado de la eliminación.
+ */
+export async function eliminarPizzaAsync(id) {
+    const resultado = await coleccionPizzas.deleteOne({
+        id: Number(id)
+    })
+
+    return resultado
 }
